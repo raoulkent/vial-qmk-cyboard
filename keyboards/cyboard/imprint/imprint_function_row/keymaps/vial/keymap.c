@@ -41,8 +41,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_TAB,  KC_Q,    KC_W,    KC_F,    KC_P,    KC_B,                                KC_J,    KC_L,    KC_U,    KC_Y,    KC_SCLN, KC_BSLS,
         KC_LCTL, MT_A,    MT_R,    MT_S,    MT_T,    KC_G,                                KC_M,    MT_N,    MT_E,    MT_I,    MT_O,    KC_QUOT,
         KC_LSFT, KC_Z,    KC_X,    KC_C,    KC_D,    KC_V,                                KC_K,    KC_H,    KC_COMM, KC_DOT,  KC_SLSH, KC_RSFT,
-                          KC_LGUI,   KC_LALT,   KC_LGUI, KC_ENT, KC_DEL,           KC_BSPC,  KC_SPC,  MO(1), KC_LBRC,  KC_RBRC,
-                                            KC_HOME, KC_END,    KC_ESC,           KC_GRAVE,  KC_CAPS,  KC_APP
+                          KC_LGUI, KC_LALT,     KC_LGUI, KC_ENT, KC_DEL,        KC_BSPC,  KC_SPC,  MO(1),   KC_LBRC, KC_RBRC,
+                                                KC_HOME, KC_END, KC_ESC,        KC_GRAVE, KC_CAPS, KC_APP
     ),
 
     [1] = LAYOUT_fun(
