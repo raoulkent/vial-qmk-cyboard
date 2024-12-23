@@ -6,3 +6,6 @@ TAP_DANCE_ENABLE = yes
 COMBO_ENABLE = yes
 KEY_OVERRIDE_ENABLE = yes
 VIALRGB_ENABLE = yes
+
+SRC += features/achordion.c
+
