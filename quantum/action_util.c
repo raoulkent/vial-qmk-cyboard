@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "action_layer.h"
 #include "timer.h"
 #include "keycode_config.h"
+#include "qmk_settings.h"
 #include <string.h>
 
 extern keymap_config_t keymap_config;
@@ -35,6 +36,9 @@ static uint8_t suppressed_mods    = 0;
 // TODO: pointer variable is not needed
 // report_keyboard_t keyboard_report = {};
 report_keyboard_t *keyboard_report = &(report_keyboard_t){};
+#ifdef NKRO_ENABLE
+report_nkro_t *nkro_report = &(report_nkro_t){};
+#endif
 
 extern inline void add_key(uint8_t key);
 extern inline void del_key(uint8_t key);
@@ -45,6 +49,12 @@ static uint8_t oneshot_mods        = 0;
 static uint8_t oneshot_locked_mods = 0;
 uint8_t        get_oneshot_locked_mods(void) {
     return oneshot_locked_mods;
+}
+void add_oneshot_locked_mods(uint8_t mods) {
+    if ((oneshot_locked_mods & mods) != mods) {
+        oneshot_locked_mods |= mods;
+        oneshot_locked_mods_changed_kb(oneshot_locked_mods);
+    }
 }
 void set_oneshot_locked_mods(uint8_t mods) {
     if (mods != oneshot_locked_mods) {
@@ -58,16 +68,16 @@ void clear_oneshot_locked_mods(void) {
         oneshot_locked_mods_changed_kb(oneshot_locked_mods);
     }
 }
-#    if (defined(ONESHOT_TIMEOUT) && (ONESHOT_TIMEOUT > 0))
+void del_oneshot_locked_mods(uint8_t mods) {
+    if (oneshot_locked_mods & mods) {
+        oneshot_locked_mods &= ~mods;
+        oneshot_locked_mods_changed_kb(oneshot_locked_mods);
+    }
+}
 static uint16_t oneshot_time = 0;
 bool            has_oneshot_mods_timed_out(void) {
-    return TIMER_DIFF_16(timer_read(), oneshot_time) >= ONESHOT_TIMEOUT;
+    return QS_oneshot_timeout > 0 && TIMER_DIFF_16(timer_read(), oneshot_time) >= QS_oneshot_timeout;
 }
-#    else
-bool has_oneshot_mods_timed_out(void) {
-    return false;
-}
-#    endif
 #endif
 
 /* oneshot layer */
@@ -78,7 +88,7 @@ bool has_oneshot_mods_timed_out(void) {
  *   L => are layer bits
  *   S => oneshot state bits
  */
-static int8_t oneshot_layer_data = 0;
+static uint8_t oneshot_layer_data = 0;
 
 inline uint8_t get_oneshot_layer(void) {
     return oneshot_layer_data >> 3;
@@ -96,30 +106,26 @@ enum {
 } swap_hands_oneshot = SHO_OFF;
 #    endif
 
-#    if (defined(ONESHOT_TIMEOUT) && (ONESHOT_TIMEOUT > 0))
 static uint16_t oneshot_layer_time = 0;
 inline bool     has_oneshot_layer_timed_out(void) {
-    return TIMER_DIFF_16(timer_read(), oneshot_layer_time) >= ONESHOT_TIMEOUT && !(get_oneshot_layer_state() & ONESHOT_TOGGLED);
+    return TIMER_DIFF_16(timer_read(), oneshot_layer_time) >= QS_oneshot_timeout && !(get_oneshot_layer_state() & ONESHOT_TOGGLED);
 }
 #        ifdef SWAP_HANDS_ENABLE
 static uint16_t oneshot_swaphands_time = 0;
 inline bool     has_oneshot_swaphands_timed_out(void) {
-    return TIMER_DIFF_16(timer_read(), oneshot_swaphands_time) >= ONESHOT_TIMEOUT && (swap_hands_oneshot == SHO_ACTIVE);
+    return TIMER_DIFF_16(timer_read(), oneshot_swaphands_time) >= QS_oneshot_timeout && (swap_hands_oneshot == SHO_ACTIVE);
 }
 #        endif
-#    endif
 
 #    ifdef SWAP_HANDS_ENABLE
 
 void set_oneshot_swaphands(void) {
     swap_hands_oneshot = SHO_PRESSED;
     swap_hands         = true;
-#        if (defined(ONESHOT_TIMEOUT) && (ONESHOT_TIMEOUT > 0))
     oneshot_swaphands_time = timer_read();
     if (oneshot_layer_time != 0) {
         oneshot_layer_time = oneshot_swaphands_time;
     }
-#        endif
 }
 
 void release_oneshot_swaphands(void) {
@@ -143,9 +149,7 @@ void use_oneshot_swaphands(void) {
 void clear_oneshot_swaphands(void) {
     swap_hands_oneshot = SHO_OFF;
     swap_hands         = false;
-#        if (defined(ONESHOT_TIMEOUT) && (ONESHOT_TIMEOUT > 0))
     oneshot_swaphands_time = 0;
-#        endif
 }
 
 #    endif
@@ -158,9 +162,7 @@ void set_oneshot_layer(uint8_t layer, uint8_t state) {
     if (keymap_config.oneshot_enable) {
         oneshot_layer_data = layer << 3 | state;
         layer_on(layer);
-#    if (defined(ONESHOT_TIMEOUT) && (ONESHOT_TIMEOUT > 0))
         oneshot_layer_time = timer_read();
-#    endif
         oneshot_layer_changed_kb(get_oneshot_layer());
     } else {
         layer_on(layer);
@@ -172,9 +174,7 @@ void set_oneshot_layer(uint8_t layer, uint8_t state) {
  */
 void reset_oneshot_layer(void) {
     oneshot_layer_data = 0;
-#    if (defined(ONESHOT_TIMEOUT) && (ONESHOT_TIMEOUT > 0))
     oneshot_layer_time = 0;
-#    endif
     oneshot_layer_changed_kb(get_oneshot_layer());
 }
 /** \brief Clear oneshot layer
@@ -240,35 +240,35 @@ bool is_oneshot_enabled(void) {
 
 #endif
 
-/** \brief Send keyboard report
- *
- * FIXME: needs doc
- */
-void send_keyboard_report(void) {
-    keyboard_report->mods = real_mods;
-    keyboard_report->mods |= weak_mods;
+static uint8_t get_mods_for_report(void) {
+    uint8_t mods = real_mods | weak_mods;
 
 #ifndef NO_ACTION_ONESHOT
     if (oneshot_mods) {
-#    if (defined(ONESHOT_TIMEOUT) && (ONESHOT_TIMEOUT > 0))
+if (QS_oneshot_timeout > 0) {
         if (has_oneshot_mods_timed_out()) {
             dprintf("Oneshot: timeout\n");
             clear_oneshot_mods();
         }
-#    endif
-        keyboard_report->mods |= oneshot_mods;
-        if (has_anykey(keyboard_report)) {
+}
+        mods |= oneshot_mods;
+        if (has_anykey()) {
             clear_oneshot_mods();
         }
     }
-
 #endif
 
 #ifdef KEY_OVERRIDE_ENABLE
     // These need to be last to be able to properly control key overrides
-    keyboard_report->mods &= ~suppressed_mods;
-    keyboard_report->mods |= weak_override_mods;
+    mods &= ~suppressed_mods;
+    mods |= weak_override_mods;
 #endif
+
+    return mods;
+}
+
+void send_6kro_report(void) {
+    keyboard_report->mods = get_mods_for_report();
 
 #ifdef PROTOCOL_VUSB
     host_keyboard_send(keyboard_report);
@@ -280,6 +280,36 @@ void send_keyboard_report(void) {
         memcpy(&last_report, keyboard_report, sizeof(report_keyboard_t));
         host_keyboard_send(keyboard_report);
     }
+#endif
+}
+
+#ifdef NKRO_ENABLE
+void send_nkro_report(void) {
+    nkro_report->mods = get_mods_for_report();
+
+    static report_nkro_t last_report;
+
+    /* Only send the report if there are changes to propagate to the host. */
+    if (memcmp(nkro_report, &last_report, sizeof(report_nkro_t)) != 0) {
+        memcpy(&last_report, nkro_report, sizeof(report_nkro_t));
+        host_nkro_send(nkro_report);
+    }
+}
+#endif
+
+/** \brief Send keyboard report
+ *
+ * FIXME: needs doc
+ */
+void send_keyboard_report(void) {
+#ifdef NKRO_ENABLE
+    if (keyboard_protocol && keymap_config.nkro) {
+        send_nkro_report();
+    } else {
+        send_6kro_report();
+    }
+#else
+    send_6kro_report();
 #endif
 }
 
@@ -390,9 +420,7 @@ uint8_t get_oneshot_mods(void) {
 
 void add_oneshot_mods(uint8_t mods) {
     if ((oneshot_mods & mods) != mods) {
-#    if (defined(ONESHOT_TIMEOUT) && (ONESHOT_TIMEOUT > 0))
         oneshot_time = timer_read();
-#    endif
         oneshot_mods |= mods;
         oneshot_mods_changed_kb(mods);
     }
@@ -401,9 +429,7 @@ void add_oneshot_mods(uint8_t mods) {
 void del_oneshot_mods(uint8_t mods) {
     if (oneshot_mods & mods) {
         oneshot_mods &= ~mods;
-#    if (defined(ONESHOT_TIMEOUT) && (ONESHOT_TIMEOUT > 0))
         oneshot_time = oneshot_mods ? timer_read() : 0;
-#    endif
         oneshot_mods_changed_kb(oneshot_mods);
     }
 }
@@ -415,9 +441,7 @@ void del_oneshot_mods(uint8_t mods) {
 void set_oneshot_mods(uint8_t mods) {
     if (keymap_config.oneshot_enable) {
         if (oneshot_mods != mods) {
-#    if (defined(ONESHOT_TIMEOUT) && (ONESHOT_TIMEOUT > 0))
             oneshot_time = timer_read();
-#    endif
             oneshot_mods = mods;
             oneshot_mods_changed_kb(mods);
         }
@@ -431,9 +455,7 @@ void set_oneshot_mods(uint8_t mods) {
 void clear_oneshot_mods(void) {
     if (oneshot_mods) {
         oneshot_mods = 0;
-#    if (defined(ONESHOT_TIMEOUT) && (ONESHOT_TIMEOUT > 0))
         oneshot_time = 0;
-#    endif
         oneshot_mods_changed_kb(oneshot_mods);
     }
 }
@@ -488,3 +510,28 @@ __attribute__((weak)) void oneshot_layer_changed_kb(uint8_t layer) {
 uint8_t has_anymod(void) {
     return bitpop(real_mods);
 }
+
+#ifdef DUMMY_MOD_NEUTRALIZER_KEYCODE
+/** \brief Send a dummy keycode in between the register and unregister event of a modifier key, to neutralize the "flashing modifiers" phenomenon.
+ *
+ * \param active_mods 8-bit packed bit-array describing the currently active modifiers (in the format GASCGASC).
+ *
+ * Certain QMK features like  key overrides or retro tap must unregister a previously
+ * registered modifier before sending another keycode but this can trigger undesired
+ * keyboard shortcuts if the clean tap of a single modifier key is bound to an action
+ * on the host OS, as is for example the case for the left GUI key on Windows, which
+ * opens the Start Menu when tapped.
+ */
+void neutralize_flashing_modifiers(uint8_t active_mods) {
+    // In most scenarios, the flashing modifiers phenomenon is a problem
+    // only for a subset of modifier masks.
+    const static uint8_t mods_to_neutralize[] = MODS_TO_NEUTRALIZE;
+    const static uint8_t n_mods               = ARRAY_SIZE(mods_to_neutralize);
+    for (uint8_t i = 0; i < n_mods; ++i) {
+        if (active_mods == mods_to_neutralize[i]) {
+            tap_code(DUMMY_MOD_NEUTRALIZER_KEYCODE);
+            break;
+        }
+    }
+}
+#endif

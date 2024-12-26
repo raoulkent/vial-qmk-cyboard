@@ -2,10 +2,14 @@
 #include <stdint.h>
 
 #include "keyboard.h"
-#include "keymap.h"
 #include "action.h"
+#include "encoder.h"
 #include "util.h"
 #include "action_layer.h"
+
+#ifdef VIAL_ENABLE
+#include "vial.h"
+#endif
 
 /** \brief Default Layer State
  */
@@ -258,6 +262,10 @@ uint8_t read_source_layers_cache_impl(uint16_t entry_number, uint8_t cache[][MAX
  * Updates the cached encoders when changing layers
  */
 void update_source_layers_cache(keypos_t key, uint8_t layer) {
+#ifdef VIAL_ENABLE
+    if (key.row == VIAL_MATRIX_MAGIC) return;
+#endif
+
     if (key.row < MATRIX_ROWS && key.col < MATRIX_COLS) {
         const uint16_t entry_number = (uint16_t)(key.row * MATRIX_COLS) + key.col;
         update_source_layers_cache_impl(layer, entry_number, source_layers_cache);
@@ -275,6 +283,10 @@ void update_source_layers_cache(keypos_t key, uint8_t layer) {
  * reads the cached keys stored when the layer was changed
  */
 uint8_t read_source_layers_cache(keypos_t key) {
+#ifdef VIAL_ENABLE
+    if (key.row == VIAL_MATRIX_MAGIC) return 0;
+#endif
+
     if (key.row < MATRIX_ROWS && key.col < MATRIX_COLS) {
         const uint16_t entry_number = (uint16_t)(key.row * MATRIX_COLS) + key.col;
         return read_source_layers_cache_impl(entry_number, source_layers_cache);

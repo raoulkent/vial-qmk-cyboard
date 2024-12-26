@@ -1,5 +1,6 @@
 #ifdef RGB_MATRIX_KEYREACTIVE_ENABLED
 #    ifdef ENABLE_RGB_MATRIX_SOLID_REACTIVE
+#define RGB_MATRIX_EFFECT_SOLID_REACTIVE
 RGB_MATRIX_EFFECT(SOLID_REACTIVE)
 #        ifdef RGB_MATRIX_CUSTOM_EFFECT_IMPLS
 
@@ -7,7 +8,7 @@ static HSV SOLID_REACTIVE_math(HSV hsv, uint16_t offset) {
 #            ifdef RGB_MATRIX_SOLID_REACTIVE_GRADIENT_MODE
     hsv.h = scale16by8(g_rgb_timer, qadd8(rgb_matrix_config.speed, 8) >> 4);
 #            endif
-    hsv.h += qsub8(130, offset);
+    hsv.h += scale8(255 - offset, 64);
     return hsv;
 }
 

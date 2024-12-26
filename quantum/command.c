@@ -19,7 +19,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "wait.h"
 #include "keycode.h"
 #include "host.h"
-#include "keymap.h"
 #include "print.h"
 #include "debug.h"
 #include "util.h"
@@ -46,6 +45,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifdef AUDIO_ENABLE
 #    include "audio.h"
 #endif /* AUDIO_ENABLE */
+
+#ifdef VIAL_ENABLE
+#    include "vial.h"
+#endif
 
 static bool command_common(uint8_t code);
 static void command_common_help(void);
@@ -223,21 +226,16 @@ static void print_status(void) {
         "\n\t- Status -\n"
 
         "host_keyboard_leds(): %02X\n"
-#ifndef PROTOCOL_VUSB
         "keyboard_protocol: %02X\n"
         "keyboard_idle: %02X\n"
-#endif
 #ifdef NKRO_ENABLE
         "keymap_config.nkro: %02X\n"
 #endif
         "timer_read32(): %08lX\n"
 
         , host_keyboard_leds()
-#ifndef PROTOCOL_VUSB
-        /* these aren't set on the V-USB protocol, so we just ignore them for now */
         , keyboard_protocol
         , keyboard_idle
-#endif
 #ifdef NKRO_ENABLE
         , keymap_config.nkro
 #endif
@@ -385,6 +383,9 @@ static bool command_common(uint8_t code) {
         case MAGIC_KC(MAGIC_KEY_BOOTLOADER):
         case MAGIC_KC(MAGIC_KEY_BOOTLOADER_ALT):
             print("\n\nJumping to bootloader... ");
+#ifdef VIAL_ENABLE
+            if (vial_unlocked)
+#endif
             reset_keyboard();
             break;
 

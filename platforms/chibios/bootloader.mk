@@ -93,13 +93,23 @@ ifeq ($(strip $(BOOTLOADER)), kiibohd)
 endif
 ifeq ($(strip $(BOOTLOADER)), stm32duino)
     OPT_DEFS += -DBOOTLOADER_STM32DUINO
-    MCU_LDSCRIPT = STM32F103x8_stm32duino_bootloader
     BOARD = STM32_F103_STM32DUINO
     BOOTLOADER_TYPE = stm32duino
 
     # Options to pass to dfu-util when flashing
     DFU_ARGS = -d 1EAF:0003 -a 2 -R
     DFU_SUFFIX_ARGS = -v 1EAF -p 0003
+endif
+ifeq ($(strip $(BOOTLOADER)), vibl)
+    MCU_LDSCRIPT = STM32_F103_vibl
+    BOARD = STM32_F103_vibl
+    PROGRAM_CMD = echo 'CLI flashing not supported' >&2
+    OPT_DEFS += -DBOOTLOADER_VIBL
+    BOOTLOADER_TYPE = vibl
+
+    DFU_ARGS =
+    DFU_SUFFIX_ARGS =
+    VIBL = 1
 endif
 ifeq ($(strip $(BOOTLOADER)), tinyuf2)
     OPT_DEFS += -DBOOTLOADER_TINYUF2
@@ -108,6 +118,7 @@ ifeq ($(strip $(BOOTLOADER)), tinyuf2)
 endif
 ifeq ($(strip $(BOOTLOADER)), uf2boot)
     OPT_DEFS += -DBOOTLOADER_UF2BOOT
+    BOARD = STM32_F103_STM32DUINO
     BOOTLOADER_TYPE = uf2boot
     FIRMWARE_FORMAT = uf2
 endif

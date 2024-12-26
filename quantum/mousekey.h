@@ -44,9 +44,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #            define MOUSEKEY_MOVE_DELTA 8
 #        endif
 #    endif
-#    ifndef MOUSEKEY_WHEEL_DELTA
-#        define MOUSEKEY_WHEEL_DELTA 1
-#    endif
 #    ifndef MOUSEKEY_DELAY
 #        if defined(MK_KINETIC_SPEED)
 #            define MOUSEKEY_DELAY 5
@@ -84,6 +81,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #    endif
 #    ifndef MOUSEKEY_WHEEL_INTERVAL
 #        define MOUSEKEY_WHEEL_INTERVAL 80
+#    endif
+#    ifndef MOUSEKEY_WHEEL_DELTA
+#        define MOUSEKEY_WHEEL_DELTA 1
 #    endif
 #    ifndef MOUSEKEY_WHEEL_MAX_SPEED
 #        define MOUSEKEY_WHEEL_MAX_SPEED 8
@@ -182,6 +182,8 @@ extern uint8_t mk_delay;
 extern uint8_t mk_interval;
 extern uint8_t mk_max_speed;
 extern uint8_t mk_time_to_max;
+extern uint8_t mk_wheel_delay;
+extern uint8_t mk_wheel_interval;
 extern uint8_t mk_wheel_max_speed;
 extern uint8_t mk_wheel_time_to_max;
 
