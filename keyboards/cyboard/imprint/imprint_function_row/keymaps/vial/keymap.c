@@ -29,7 +29,7 @@ uint16_t achordion_streak_chord_timeout(
   if ((mod & MOD_LSFT) != 0) {
     return 100;  // A shorter streak timeout for Shift mod-tap keys.
   } else {
-    return 240;  // A longer timeout otherwise.
+    return 190;  // A longer timeout otherwise.
   }
 }
 
