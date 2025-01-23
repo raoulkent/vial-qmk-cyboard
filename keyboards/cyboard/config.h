@@ -58,6 +58,6 @@
 #define ACHORDION_STREAK
 
 // // Tap-hold configuration for home row mods.
-#define TAPPING_TERM 175
-#define PERMISSIVE_HOLD
-// #define QUICK_TAP_TERM_PER_KEY
+#define TAPPING_TERM 170
+// #define PERMISSIVE_HOLD
+#define QUICK_TAP_TERM_PER_KEY
