@@ -418,6 +418,9 @@ void keyboard_post_init_kb(void) {
     transaction_register_rpc(RPC_ID_KB_CONFIG_DUAL_SYNC, charybdis_config_dual_sync_handler);
 #    endif
     keyboard_post_init_user();
+
+    // Set left trackball on init
+    charybdis_set_pointer_dragscroll_enabled(true, true);
 }
 
 #    ifdef CHARYBDIS_CONFIG_SYNC
