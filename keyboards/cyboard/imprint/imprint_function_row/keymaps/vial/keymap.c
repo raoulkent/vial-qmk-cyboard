@@ -58,6 +58,8 @@ bool achordion_streak_continue(uint16_t keycode) {
     case KC_COMMA:
     case KC_QUOTE:
     case KC_SPACE:
+    case KC_ENTER:
+    case KC_BSPC:
       return true;
   }
   return false;  // All other keys end the streak.
@@ -69,14 +71,20 @@ bool achordion_streak_continue(uint16_t keycode) {
  * They are implemented in the CAGS order (Ctrl, Alt, Gui, Shift) for bindings in MacOS
  * You can read more about these homerow mods here: https://precondition.github.io/home-row-mods
  */
-#define MT_A MT(MOD_LCTL, KC_A)
-#define MT_R MT(MOD_LALT, KC_R)
-#define MT_S MT(MOD_LGUI, KC_S)
-#define MT_T MT(MOD_LSFT, KC_T)
-#define MT_N MT(MOD_RSFT, KC_N)
-#define MT_E MT(MOD_RGUI, KC_E)
-#define MT_I MT(MOD_RALT, KC_I)
-#define MT_O MT(MOD_RCTL, KC_O)
+//   Left hand homerow mods
+#define MT_A    MT(MOD_LCTL, KC_A)
+#define MT_R    MT(MOD_LALT, KC_R)
+#define MT_S    MT(MOD_LGUI, KC_S)
+#define MT_T    MT(MOD_LSFT, KC_T)
+//  Right hand homerow mods
+#define MT_N    MT(MOD_RSFT, KC_N)
+#define MT_E    MT(MOD_RGUI, KC_E)
+#define MT_I    MT(MOD_RALT, KC_I)
+#define MT_O    MT(MOD_RCTL, KC_O)
+//   Left hand thumbcluster
+//  Right hand thumbcluster
+#define LT_ENT  LT(5, KC_ENTER)
+#define LT_BSPC LT(6, KC_BSPC)
 
 
 // ███╗   ███╗ ██████╗ ██╗   ██╗███████╗███████╗    ███████╗ ██████╗██████╗  ██████╗ ██╗     ██╗         ████████╗ ██████╗  ██████╗  ██████╗ ██╗     ███████╗
@@ -123,7 +131,6 @@ bool caps_word_press_user(uint16_t keycode) {
 // ██╔═██╗ ██╔══╝    ╚██╔╝      ██║╚██╔╝██║██╔══██║██╔═══╝
 // ██║  ██╗███████╗   ██║       ██║ ╚═╝ ██║██║  ██║██║
 // ╚═╝  ╚═╝╚══════╝   ╚═╝       ╚═╝     ╚═╝╚═╝  ╚═╝╚═╝
-
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     // Base layer
     [0] = LAYOUT_fun(
@@ -132,8 +139,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_TAB,  KC_Q,    KC_W,    KC_F,    KC_P,    KC_B,                                  KC_J,    KC_L,    KC_U,    KC_Y,    KC_SCLN, KC_BSLS,
         KC_LCTL, MT_A,    MT_R,    MT_S,    MT_T,    KC_G,                                  KC_M,    MT_N,    MT_E,    MT_I,    MT_O,    KC_QUOT,
         KC_LSFT, KC_Z,    KC_X,    KC_C,    KC_D,    KC_V,                                  KC_K,    KC_H,    KC_COMM, KC_DOT,  KC_SLSH, KC_RSFT,
-                        KC_GRAVE, CW_TOGG, KC_SPC,  KC_TAB, KC_BTN1,              KC_BTN2, KC_ENT,  KC_BSPC,   KC_LBRC, KC_RBRC,
-                                           KC_ESC,  MO(1),  _______,              KC_BTN3, MO(1),   KC_DEL
+                        KC_GRAVE, CW_TOGG, KC_SPC,  KC_TAB, KC_BTN3,              KC_BTN1, LT_ENT,  LT_BSPC,  KC_LBRC, KC_RBRC,
+                                           KC_ESC,  MO(1),  _______,              KC_BTN2, MO(1),   KC_DEL
     ),
     // Nav layer
     [1] = LAYOUT_fun(
