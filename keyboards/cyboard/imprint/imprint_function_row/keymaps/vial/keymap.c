@@ -86,6 +86,38 @@ bool achordion_streak_continue(uint16_t keycode) {
 #define LT_ENT  LT(5, KC_ENTER)
 #define LT_BSPC LT(6, KC_BSPC)
 
+/**
+ * @file keymap.c
+ * @brief Keymap definitions for Swedish Unicode characters on the Cyboard keyboard.
+ *
+ * This file contains the key definitions for Swedish Unicode characters, including both
+ * lowercase and uppercase versions of ä, å, and ö. These definitions are used to map
+ * specific keycodes to their corresponding Unicode characters.
+ *
+ * Key Definitions:
+ * - KC_LAE: Unicode character for lowercase ä (U+00E4)
+ * - KC_LAA: Unicode character for lowercase å (U+00E5)
+ * - KC_LOE: Unicode character for lowercase ö (U+00F6)
+ * - KC_UAE: Unicode character for uppercase Ä (U+00C4)
+ * - KC_UAA: Unicode character for uppercase Å (U+00C5)
+ * - KC_UOE: Unicode character for uppercase Ö (U+00D6)
+ *
+ * Combined Key Definitions:
+ * - KC_AE: Combined key definition for ä (lowercase) and Ä (uppercase)
+ * - KC_AA: Combined key definition for å (lowercase) and Å (uppercase)
+ * - KC_OE: Combined key definition for ö (lowercase) and Ö (uppercase)
+ */
+// Swedish Unicode chars
+#define UC_LAE UC(00E4) // ä
+#define UC_LAA UC(00E5) // å
+#define UC_LOE UC(00F6) // ö
+#define UC_UAE UC(00C4) // Ä
+#define UC_UAA UC(00C5) // Å
+#define UC_UOE UC(00D6) // Ö
+
+#define KC_AE UP(UC_LAE, UC_UAE)
+#define KC_AA UP(UC_LAA, UC_UAA)
+#define KC_OE UP(UC_LOE, UC_UOE)
 
 // ███╗   ███╗ ██████╗ ██╗   ██╗███████╗███████╗    ███████╗ ██████╗██████╗  ██████╗ ██╗     ██╗         ████████╗ ██████╗  ██████╗  ██████╗ ██╗     ███████╗
 // ████╗ ████║██╔═══██╗██║   ██║██╔════╝██╔════╝    ██╔════╝██╔════╝██╔══██╗██╔═══██╗██║     ██║         ╚══██╔══╝██╔═══██╗██╔════╝ ██╔════╝ ██║     ██╔════╝
@@ -146,7 +178,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [1] = LAYOUT_fun(
         _______, _______, _______, _______, _______, _______,                           _______, _______, _______, _______, _______, _______,
         _______, _______, _______, _______, _______, _______,                           _______, _______, _______, _______, _______, _______,
-        _______, _______, _______, _______, _______, _______,                           KC_AGIN, KC_PSTE, KC_COPY, KC_CUT,  KC_UNDO, _______,
+        _______, _______, KC_AE  , KC_AA  , KC_OE  , _______,                           KC_AGIN, KC_PSTE, KC_COPY, KC_CUT,  KC_UNDO, _______,
         _______, KC_LCTL, KC_LALT, KC_LGUI, KC_LSFT, _______,                           KC_CAPS, KC_LEFT, KC_DOWN, KC_UP,  KC_RIGHT, _______,
         _______, _______, _______, _______, _______, _______,                           _______, KC_HOME, KC_PGDN, KC_PGUP, KC_END,  _______,
                           _______, _______, _______, _______, L_SCROLL_TOG,        R_SCROLL_TOG, _______, _______, _______, _______,
