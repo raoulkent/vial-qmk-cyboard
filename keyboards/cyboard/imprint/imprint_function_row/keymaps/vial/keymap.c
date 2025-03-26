@@ -5,6 +5,9 @@
 #include QMK_KEYBOARD_H
 #include <cyboard.h>
 
+// #include "keymap_us_international.h"
+// #include "sendstring_us_international.h"
+
 
 //  █████╗  ██████╗██╗  ██╗ ██████╗ ██████╗ ██████╗ ██╗ ██████╗ ███╗   ██╗
 // ██╔══██╗██╔════╝██║  ██║██╔═══██╗██╔══██╗██╔══██╗██║██╔═══██╗████╗  ██║
@@ -108,16 +111,42 @@ bool achordion_streak_continue(uint16_t keycode) {
  * - KC_OE: Combined key definition for ö (lowercase) and Ö (uppercase)
  */
 // Swedish Unicode chars
-#define UC_LAE UC(00E4) // ä
-#define UC_LAA UC(00E5) // å
-#define UC_LOE UC(00F6) // ö
-#define UC_UAE UC(00C4) // Ä
-#define UC_UAA UC(00C5) // Å
-#define UC_UOE UC(00D6) // Ö
+// #define UC_LAE 0x00E4 // ä
+// #define UC_LAA 0x00E5 // å
+// #define UC_LOE 0x00F6 // ö
+// #define UC_UAE 0x00C4 // Ä
+// #define UC_UAA 0x00C5 // Å
+// #define UC_UOE 0x00D6 // Ö
 
-#define KC_AE UP(UC_LAE, UC_UAE)
-#define KC_AA UP(UC_LAA, UC_UAA)
-#define KC_OE UP(UC_LOE, UC_UOE)
+// #define KC_AE UP(0x00E4, 0x00C4)
+// #define KC_AA UP(0x00E5, 0x00C5)
+// #define KC_OE UP(0x00F6, 0x00D6)
+// #define KC_AE UP(UC_LAE, UC_UAE)
+// #define KC_AA UP(UC_LAA, UC_UAA)
+// #define KC_OE UP(UC_LOE, UC_UOE)
+
+// enum unicode_names {
+//     UC_AE_LOWER,
+//     UC_AA_LOWER,
+//     UC_OE_LOWER,
+//     UC_AE_UPPER,
+//     UC_AA_UPPER,
+//     UC_OE_UPPER,
+// };
+
+// const uint32_t unicode_map[] PROGMEM = {
+//   [UC_AE_LOWER]     = 0x00e4, // ä
+//   [UC_AA_LOWER]     = 0x00e5, // å
+//   [UC_OE_LOWER]     = 0x00f6, // ö
+//   [UC_AE_UPPER]     = 0x00c4, // Ä
+//   [UC_AA_UPPER]     = 0x00c5, // Å
+//   [UC_OE_UPPER]     = 0x00d6, // Ö
+// };
+
+// #define KC_AE UP(UC_AE_LOWER, UC_AE_UPPER)
+// #define KC_AA UP(UC_AA_LOWER, UC_AA_UPPER)
+// #define KC_OE UP(UC_OE_LOWER, UC_OE_UPPER)
+
 
 // ███╗   ███╗ ██████╗ ██╗   ██╗███████╗███████╗    ███████╗ ██████╗██████╗  ██████╗ ██╗     ██╗         ████████╗ ██████╗  ██████╗  ██████╗ ██╗     ███████╗
 // ████╗ ████║██╔═══██╗██║   ██║██╔════╝██╔════╝    ██╔════╝██╔════╝██╔══██╗██╔═══██╗██║     ██║         ╚══██╔══╝██╔═══██╗██╔════╝ ██╔════╝ ██║     ██╔════╝
@@ -135,7 +164,7 @@ bool achordion_streak_continue(uint16_t keycode) {
 // ██║     ███████║██████╔╝███████╗██║ █╗ ██║██║   ██║██████╔╝██║  ██║
 // ██║     ██╔══██║██╔═══╝ ╚════██║██║███╗██║██║   ██║██╔══██╗██║  ██║
 // ╚██████╗██║  ██║██║     ███████║╚███╔███╔╝╚██████╔╝██║  ██║██████╔╝
-//  ╚═════╝╚═╝  ╚═╝╚═╝     ╚══════╝ ╚══╝╚══╝  ╚═════╝ ╚═╝  ╚═╝╚═════╝
+//  ╚═════╝╚═╝  ╚═╝╚═╝     ╚══════╝ ╚══╝╚══╝  ╚═════╝ ╚═╝  ╚═╝╚═════╝about:blank#blocked
 
 bool caps_word_press_user(uint16_t keycode) {
     switch (keycode) {
@@ -178,7 +207,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [1] = LAYOUT_fun(
         _______, _______, _______, _______, _______, _______,                           _______, _______, _______, _______, _______, _______,
         _______, _______, _______, _______, _______, _______,                           _______, _______, _______, _______, _______, _______,
-        _______, _______, KC_AE  , KC_AA  , KC_OE  , _______,                           KC_AGIN, KC_PSTE, KC_COPY, KC_CUT,  KC_UNDO, _______,
+        _______, _______, _______, _______, _______, _______,                           KC_AGIN, KC_PSTE, KC_COPY, KC_CUT,  KC_UNDO, _______,
         _______, KC_LCTL, KC_LALT, KC_LGUI, KC_LSFT, _______,                           KC_CAPS, KC_LEFT, KC_DOWN, KC_UP,  KC_RIGHT, _______,
         _______, _______, _______, _______, _______, _______,                           _______, KC_HOME, KC_PGDN, KC_PGUP, KC_END,  _______,
                           _______, _______, _______, _______, L_SCROLL_TOG,        R_SCROLL_TOG, _______, _______, _______, _______,
@@ -227,12 +256,12 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     // Sym layer
     [6] = LAYOUT_fun(
         _______, _______, _______, _______, _______, _______,                           _______, _______, _______, _______, _______, _______,
-        _______, _______, _______, _______, _______, _______,                           _______, _______, _______, _______, _______, _______,
-        _______, KC_LCBR, KC_AMPR, KC_ASTR, KC_LPRN, KC_RCBR,                           _______, _______, _______, _______, _______, _______,
-        _______, KC_COLN, KC_DLR,  KC_PERC, KC_CIRC, KC_PLUS,                           _______, KC_RCTL, KC_RALT, KC_RGUI, KC_RSFT, _______,
-        _______, KC_TILD, KC_EXLM, KC_AT,   KC_HASH, KC_PIPE,                           _______, _______, _______, _______, _______, _______,
-                          _______, _______, KC_LPRN, KC_RPRN, KC_UNDS,         _______, _______, _______, _______, _______,
-                                            _______, _______, _______,         _______, _______, _______
+        KC_GRV , KC_LBRC, KC_LPRN, KC_RPRN, KC_RBRC, KC_DOT ,                           _______, _______, _______, _______, _______, _______,
+        KC_EXLM, KC_COMM, KC_LCBR, KC_RCBR, KC_SCLN, KC_QUES,                           KC_GRV , _______, _______, _______, _______, _______,
+        KC_HASH, KC_CIRC, KC_EQL,  KC_UNDS, KC_DLR , KC_ASTR,                           KC_DQT , KC_RCTL, KC_RALT, KC_RGUI, KC_RSFT, _______,
+        KC_TILD, KC_LABK, KC_PIPE, KC_MINS, KC_RABK, KC_SLSH,                           KC_QUOT, _______, _______, _______, _______, _______,
+                          KC_AMPR, KC_PLUS, KC_BSLS, KC_DOT , KC_ASTR,         _______, _______, _______, _______, _______,
+                                            KC_PERC, KC_COLN, KC_AT  ,         _______, _______, _______
     ),
     // Function layer
     [7] = LAYOUT_fun(
