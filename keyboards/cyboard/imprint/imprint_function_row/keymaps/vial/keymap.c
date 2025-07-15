@@ -8,7 +8,27 @@
 // #include "keymap_us_international.h"
 // #include "sendstring_us_international.h"
 
+//  ██████╗██╗  ██╗ ██████╗ ██████╗ ██████╗  █████╗ ██╗         ██╗  ██╗ ██████╗ ██╗     ██████╗
+// ██╔════╝██║  ██║██╔═══██╗██╔══██╗██╔══██╗██╔══██╗██║         ██║  ██║██╔═══██╗██║     ██╔══██╗
+// ██║     ███████║██║   ██║██████╔╝██║  ██║███████║██║         ███████║██║   ██║██║     ██║  ██║
+// ██║     ██╔══██║██║   ██║██╔══██╗██║  ██║██╔══██║██║         ██╔══██║██║   ██║██║     ██║  ██║
+// ╚██████╗██║  ██║╚██████╔╝██║  ██║██████╔╝██║  ██║███████╗    ██║  ██║╚██████╔╝███████╗██████╔╝
+//  ╚═════╝╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═╝╚═════╝ ╚═╝  ╚═╝╚══════╝    ╚═╝  ╚═╝ ╚═════╝ ╚══════╝╚═════╝
+char chordal_hold_handedness(keypos_t key) {
+    if (key.col == 0 || key.col == MATRIX_COLS - 1) {
+        return '*';  // Exempt the outer columns.
+    }
+    // On split keyboards, typically, the first half of the rows are on the
+    // left, and the other half are on the right.
+    return key.row < MATRIX_ROWS / 2 ? 'L' : 'R';
+}
 
+
+// ███    ███ ████████      █████  ███    ██ ██████      ██      ████████
+// ████  ████    ██        ██   ██ ████   ██ ██   ██     ██         ██
+// ██ ████ ██    ██        ███████ ██ ██  ██ ██   ██     ██         ██
+// ██  ██  ██    ██        ██   ██ ██  ██ ██ ██   ██     ██         ██
+// ██      ██    ██        ██   ██ ██   ████ ██████      ███████    ██
 /* Some useful mod tap keys, used for homerow mods
  * These follow the format of MT(MOD, KEY), used by achordion
  * For example, MT_A is a mod tap key that sends LCTL when held and A when tapped
