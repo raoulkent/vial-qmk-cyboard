@@ -23,12 +23,25 @@
         "console": false,
         "extrakey": true,
         "mousekey": true,
-        "nkro": true,
-        "rgb_matrix": true
+        "nkro": false,
+        "rgb_matrix": true,
+        "oled": true
     },
-    "ws2812": {
-        "pin": "GP15",
-        "driver": "vendor"
+    "qmk": {
+        "locking": {
+            "enabled": true,
+            "resync": true
+        }
+    },
+    "matrix_pins": {
+        "rows": ["GP20", "GP15", "GP19", "GP14", "GP18", "GP13", "GP17", "GP12", "GP16", "GP21"],
+        "cols": ["GP1",  "GP2",  "GP3",  "GP4",  "GP5",  "GP6",  "GP9"]
+    },
+    "encoder": {
+        "enabled": true,
+        "rotary": [
+            {"pin_a": "GP8", "pin_b": "GP7"}
+        ]
     },
     "rgb_matrix": {
         "driver": "ws2812",

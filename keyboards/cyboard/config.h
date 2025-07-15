@@ -55,10 +55,7 @@
 #define PMW3360_LIFTOFF_DISTANCE 0x02 //default 0x02, 2mm liftoff distance
 
 // // Achordion settings
-#define ACHORDION_STREAK
+#define TAPPING_TERM 250
+#define CHORDAL_HOLD
+#define PERMISSIVE_HOLD
 
-// // Tap-hold configuration for home row mods.
-#define TAPPING_TERM 150
-// #define PERMISSIVE_HOLD
-#define QUICK_TAP_TERM_PER_KEY
-// #define IGNORE_MOD_TAP_INTERRUPT
