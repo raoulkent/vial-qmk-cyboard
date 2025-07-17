@@ -55,3 +55,4 @@
 #define PMW3360_LIFTOFF_DISTANCE 0x02 //default 0x02, 2mm liftoff distance
 
 #define CHORDAL_HOLD
+#define FLOW_TAP_TERM 150
