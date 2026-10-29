@@ -18,6 +18,11 @@ char chordal_hold_handedness(keypos_t key) {
     if (key.col == 0 || key.col == MATRIX_COLS - 1) {
         return '*';  // Exempt the outer columns.
     }
+    if (key.row == 0 || key.row == MATRIX_ROWS / 2) {
+        // Exempt the thumb clusters (matrix row 0 per half), so a thumb layer-tap
+        // such as LT_BSPC can combine with same-hand mods on its layer.
+        return '*';
+    }
     // On split keyboards, typically, the first half of the rows are on the
     // left, and the other half are on the right.
     return key.row < MATRIX_ROWS / 2 ? 'L' : 'R';
