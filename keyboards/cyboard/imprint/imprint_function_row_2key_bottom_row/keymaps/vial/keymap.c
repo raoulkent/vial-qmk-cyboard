@@ -4,6 +4,7 @@
 
 #include QMK_KEYBOARD_H
 #include <cyboard.h>
+#include "qmk_settings.h"
 
 // #include "keymap_us_international.h"
 // #include "sendstring_us_international.h"
@@ -26,6 +27,27 @@ char chordal_hold_handedness(keypos_t key) {
     // On split keyboards, typically, the first half of the rows are on the
     // left, and the other half are on the right.
     return key.row < MATRIX_ROWS / 2 ? 'L' : 'R';
+}
+
+// Vial resets its QMK Settings (every tap-hold option off) on the first boot of
+// a new firmware build. Turn permissive hold and chordal hold back on after such
+// a reset; changes made in Vial afterwards are kept.
+#define QSID_PERMISSIVE_HOLD 22
+#define QSID_CHORDAL_HOLD    26
+
+static bool apply_tap_hold_defaults = false;
+
+// Runs in via_init() right before it checks, and possibly resets, the EEPROM.
+void via_init_kb(void) {
+    apply_tap_hold_defaults = !via_eeprom_is_valid();
+}
+
+void keyboard_post_init_user(void) {
+    if (apply_tap_hold_defaults) {
+        const uint8_t on = 1;
+        qmk_settings_set(QSID_PERMISSIVE_HOLD, &on, sizeof(on));
+        qmk_settings_set(QSID_CHORDAL_HOLD, &on, sizeof(on));
+    }
 }
 
 
