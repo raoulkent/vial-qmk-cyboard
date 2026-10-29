@@ -56,6 +56,8 @@
 
 // // Achordion settings
 #define TAPPING_TERM 250
-#define CHORDAL_HOLD
+#ifndef CHORDAL_HOLD // already passed via -D when QMK_SETTINGS is enabled (vial)
+#    define CHORDAL_HOLD
+#endif
 #define PERMISSIVE_HOLD
 

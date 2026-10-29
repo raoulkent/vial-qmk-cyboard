@@ -118,4 +118,21 @@ bool charybdis_get_pointer_dragscroll_enabled(bool is_left);
  * are translated into horizontal and vertical scroll movements.
  */
 void charybdis_set_pointer_dragscroll_enabled(bool enable, bool is_left);
+
+/**
+ * \brief Enable/disable drag-scroll mode with persistence control.
+ *
+ * When drag-scroll mode is enabled, horizontal and vertical pointer movements
+ * are translated into horizontal and vertical scroll movements.
+ *
+ * Both left and right hands now have identical functionality:
+ * - Momentary modes (persist=false) don't write to EEPROM - safe for heavy use
+ * - Toggle modes (persist=true) save state to EEPROM for both hands
+ * - Default on first boot: left hand scrolls, right hand points
+ *
+ * @param enable Whether to enable drag-scroll mode
+ * @param is_left Whether this applies to the left hand (true) or right hand (false)
+ * @param persist Whether to save this state to EEPROM (use false for momentary actions)
+ */
+void charybdis_set_pointer_dragscroll_enabled_advanced(bool enable, bool is_left, bool persist);
 #endif // SPLIT_POINTING_ENABLE

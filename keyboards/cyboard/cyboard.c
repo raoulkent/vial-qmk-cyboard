@@ -61,38 +61,96 @@ typedef union {
     } __attribute__((packed));
 } charybdis_config_t;
 
+// Dual-side configuration for EEPROM storage
+typedef union {
+    uint16_t raw;
+    struct {
+        // Left hand (8 bits)
+        uint8_t left_pointer_default_dpi : 4;
+        uint8_t left_pointer_sniping_dpi : 2;
+        bool    left_is_dragscroll_enabled : 1;
+        bool    left_is_sniping_enabled : 1;
+        // Right hand (8 bits)  
+        uint8_t right_pointer_default_dpi : 4;
+        uint8_t right_pointer_sniping_dpi : 2;
+        bool    right_is_dragscroll_enabled : 1;
+        bool    right_is_sniping_enabled : 1;
+    } __attribute__((packed));
+} charybdis_dual_config_t;
+
 static charybdis_config_t g_charybdis_config = {0};
 static charybdis_config_t g_charybdis_config_left = {0};
 static charybdis_config_t g_charybdis_config_right = {0};
 
+// EEPROM write debouncing
+static uint32_t g_eeprom_write_timer = 0;
+static bool g_eeprom_write_pending = false;
+#define EEPROM_WRITE_DEBOUNCE_MS 1000  // Wait 1 second before writing
+
 
 /**
- * \brief Set the value of `config` from EEPROM.
+ * \brief Set the value of left/right configs from EEPROM.
  *
- * Note that `is_dragscroll_enabled` and `is_sniping_enabled` are purposefully
- * ignored since we do not want to persist this state to memory.  In practice,
- * this state is always written to maximize write-performances.  Therefore, we
- * explicitly set them to `false` in this function.
+ * Note that `is_sniping_enabled` is purposefully ignored since we do not want
+ * to persist this state to memory (sniping is a momentary action).
+ * However, `is_dragscroll_enabled` is now preserved to maintain user preferences
+ * across reboots for both hands.
  */
-static void read_charybdis_config_from_eeprom(charybdis_config_t* config) {
-    config->raw                   = eeconfig_read_kb() & 0xff;
-    config->is_dragscroll_enabled = false;
-    config->is_sniping_enabled    = false;
+static void read_charybdis_config_from_eeprom(charybdis_config_t* left_config, charybdis_config_t* right_config) {
+    charybdis_dual_config_t dual_config;
+    dual_config.raw = eeconfig_read_kb() & 0xFFFF;
+    
+    // Extract left hand config
+    left_config->pointer_default_dpi = dual_config.left_pointer_default_dpi;
+    left_config->pointer_sniping_dpi = dual_config.left_pointer_sniping_dpi;
+    left_config->is_dragscroll_enabled = dual_config.left_is_dragscroll_enabled;
+    left_config->is_sniping_enabled = false; // Never persist sniping
+    
+    // Extract right hand config
+    right_config->pointer_default_dpi = dual_config.right_pointer_default_dpi;
+    right_config->pointer_sniping_dpi = dual_config.right_pointer_sniping_dpi;
+    right_config->is_dragscroll_enabled = dual_config.right_is_dragscroll_enabled;
+    right_config->is_sniping_enabled = false; // Never persist sniping
 }
 
 /**
- * \brief Save the value of `config` to eeprom.
+ * \brief Save the value of left/right configs to eeprom.
  *
- * Note that all values are written verbatim, including whether drag-scroll
- * and/or sniper mode are enabled.  `read_charybdis_config_from_eeprom(…)`
- * resets these 2 values to `false` since it does not make sense to persist
- * these across reboots of the board.
+ * Note that all values are written verbatim, including drag-scroll state
+ * to persist user preferences across reboots for both hands. Sniping mode is still not
+ * persisted as it's intended to be a momentary action.
  */
-static void write_charybdis_config_to_eeprom(charybdis_config_t* config) {
-    eeconfig_update_kb(config->raw);
+static void write_charybdis_config_to_eeprom(charybdis_config_t* left_config, charybdis_config_t* right_config) {
+    charybdis_dual_config_t dual_config;
+    
+    // Pack left hand config
+    dual_config.left_pointer_default_dpi = left_config->pointer_default_dpi;
+    dual_config.left_pointer_sniping_dpi = left_config->pointer_sniping_dpi;
+    dual_config.left_is_dragscroll_enabled = left_config->is_dragscroll_enabled;
+    dual_config.left_is_sniping_enabled = false; // Never persist sniping
+    
+    // Pack right hand config
+    dual_config.right_pointer_default_dpi = right_config->pointer_default_dpi;
+    dual_config.right_pointer_sniping_dpi = right_config->pointer_sniping_dpi;
+    dual_config.right_is_dragscroll_enabled = right_config->is_dragscroll_enabled;
+    dual_config.right_is_sniping_enabled = false; // Never persist sniping
+    
+    eeconfig_update_kb(dual_config.raw);
 }
 
-/** \brief Return the current value of the pointer's default DPI. */
+/** \brief Schedule a deferred EEPROM write to reduce wear. */
+static void schedule_eeprom_write(void) {
+    g_eeprom_write_timer = timer_read32();
+    g_eeprom_write_pending = true;
+}
+
+/** \brief Check if deferred EEPROM write should be performed. */
+static void check_deferred_eeprom_write(void) {
+    if (g_eeprom_write_pending && timer_elapsed32(g_eeprom_write_timer) > EEPROM_WRITE_DEBOUNCE_MS) {
+        write_charybdis_config_to_eeprom(&g_charybdis_config_left, &g_charybdis_config_right);
+        g_eeprom_write_pending = false;
+    }
+}
 static uint16_t get_pointer_default_dpi(charybdis_config_t* config) {
     return (uint16_t)config->pointer_default_dpi * CHARYBDIS_DEFAULT_DPI_CONFIG_STEP + CHARYBDIS_MINIMUM_DEFAULT_DPI;
 }
@@ -160,8 +218,8 @@ void charybdis_cycle_pointer_default_dpi(bool forward, bool is_left) {
     // Pass the correct configuration and the 'is_left' flag
     step_pointer_default_dpi(config, forward, is_left);
 
-    // Write the updated configuration to EEPROM
-    write_charybdis_config_to_eeprom(config);
+    // Schedule deferred write to reduce EEPROM wear (both sides now persist)
+    schedule_eeprom_write();
 }
 
 
@@ -177,8 +235,8 @@ void charybdis_cycle_pointer_sniping_dpi(bool forward, bool is_left) {
     // Pass the correct configuration and the 'is_left' flag
     step_pointer_sniping_dpi(config, forward, is_left);
 
-    // Write the updated configuration to EEPROM
-    write_charybdis_config_to_eeprom(config);
+    // Schedule deferred write to reduce EEPROM wear (both sides now persist)
+    schedule_eeprom_write();
 }
 
 bool charybdis_get_pointer_sniping_enabled(bool is_left) {
@@ -204,12 +262,20 @@ bool charybdis_get_pointer_dragscroll_enabled(bool is_left) {
 }
 
 void charybdis_set_pointer_dragscroll_enabled(bool enable, bool is_left) {
+    charybdis_set_pointer_dragscroll_enabled_advanced(enable, is_left, false);
+}
+
+void charybdis_set_pointer_dragscroll_enabled_advanced(bool enable, bool is_left, bool persist) {
     charybdis_config_t* config = is_left ? &g_charybdis_config_left : &g_charybdis_config_right;
     config->is_dragscroll_enabled = enable;
     maybe_update_pointing_device_cpi(config, is_left);
-}
-
-/**
+    
+    // Persist to EEPROM if explicitly requested (for toggles, not momentary actions)
+    if (persist) {
+        // Both sides now persist to EEPROM using the dual config system
+        schedule_eeprom_write();
+    }
+}/**
  * \brief Augment the pointing device behavior.
  *
  * Implement drag-scroll.
@@ -244,7 +310,7 @@ static void pointing_device_task_charybdis(report_mouse_t* mouse_report, bool is
 report_mouse_t pointing_device_task_combined_kb(report_mouse_t left_report, report_mouse_t right_report) {
         pointing_device_task_charybdis(&left_report, true);
         pointing_device_task_charybdis(&right_report, false);
-    return pointing_device_combine_reports(left_report, right_report);
+    return pointing_device_task_combined_user(left_report, right_report);
 }
 
 #    if defined(POINTING_DEVICE_ENABLE) && !defined(NO_CHARYBDIS_KEYCODES)
@@ -353,19 +419,23 @@ bool process_record_kb(uint16_t keycode, keyrecord_t* record) {
             }
             break;
         case LEFT_DRAGSCROLL_MODE:
-            charybdis_set_pointer_dragscroll_enabled(record->event.pressed, true);
+            // Momentary action - don't persist to EEPROM
+            charybdis_set_pointer_dragscroll_enabled_advanced(record->event.pressed, true, false);
             break;
         case RIGHT_DRAGSCROLL_MODE:
-            charybdis_set_pointer_dragscroll_enabled(record->event.pressed, false);
+            // Momentary action - don't persist to EEPROM
+            charybdis_set_pointer_dragscroll_enabled_advanced(record->event.pressed, false, false);
             break;
         case LEFT_DRAGSCROLL_MODE_TOGGLE:
             if (record->event.pressed) {
-                charybdis_set_pointer_dragscroll_enabled(!charybdis_get_pointer_dragscroll_enabled(true), true);
+                // Toggle action - persist to EEPROM
+                charybdis_set_pointer_dragscroll_enabled_advanced(!charybdis_get_pointer_dragscroll_enabled(true), true, true);
             }
             break;
         case RIGHT_DRAGSCROLL_MODE_TOGGLE:
             if (record->event.pressed) {
-                charybdis_set_pointer_dragscroll_enabled(!charybdis_get_pointer_dragscroll_enabled(false), false);
+                // Toggle action - persist to EEPROM
+                charybdis_set_pointer_dragscroll_enabled_advanced(!charybdis_get_pointer_dragscroll_enabled(false), false, true);
             }
             break;
     }
@@ -379,15 +449,26 @@ bool process_record_kb(uint16_t keycode, keyrecord_t* record) {
 
 
 void eeconfig_init_kb(void) {
-    g_charybdis_config.raw = 0;
-    write_charybdis_config_to_eeprom(&g_charybdis_config);
+    // Initialize with different defaults: left hand scroll, right hand point
+    g_charybdis_config_left.raw = 0;
+    g_charybdis_config_left.is_dragscroll_enabled = true;  // Left hand scrolls by default
+    
+    g_charybdis_config_right.raw = 0;
+    g_charybdis_config_right.is_dragscroll_enabled = false; // Right hand points by default
+    
+    write_charybdis_config_to_eeprom(&g_charybdis_config_left, &g_charybdis_config_right);
     maybe_update_pointing_device_cpi(&g_charybdis_config_left, true);
     maybe_update_pointing_device_cpi(&g_charybdis_config_right, false);
     eeconfig_init_user();
 }
 
 void matrix_init_kb(void) {
-    read_charybdis_config_from_eeprom(&g_charybdis_config);
+    // Read dual configuration from EEPROM and initialize both sides
+    read_charybdis_config_from_eeprom(&g_charybdis_config_left, &g_charybdis_config_right);
+    
+    // Update legacy config for compatibility (use left hand as primary)
+    g_charybdis_config = g_charybdis_config_left;
+
     matrix_init_user();
 }
 
@@ -412,6 +493,7 @@ void charybdis_config_dual_sync_handler(uint8_t initiator2target_buffer_size, co
 
 
 void keyboard_post_init_kb(void) {
+    // CPI settings are applied based on the loaded configuration
     maybe_update_pointing_device_cpi(&g_charybdis_config_left, true);
     maybe_update_pointing_device_cpi(&g_charybdis_config_right, false);
 #    ifdef CHARYBDIS_CONFIG_DUAL_SYNC
@@ -423,8 +505,18 @@ void keyboard_post_init_kb(void) {
     charybdis_set_pointer_dragscroll_enabled(true, true);
 }
 
+// Simple housekeeping for deferred EEPROM writes (when sync is not enabled)
+#if !defined(CHARYBDIS_CONFIG_SYNC) && !defined(CHARYBDIS_CONFIG_DUAL_SYNC)
+void housekeeping_task_kb(void) {
+    check_deferred_eeprom_write();
+    housekeeping_task_user();
+}
+#endif
+
 #    ifdef CHARYBDIS_CONFIG_SYNC
 void housekeeping_task_kb(void) {
+    check_deferred_eeprom_write();
+
     if (is_keyboard_master()) {
         // Keep track of the last state, so that we can tell if we need to propagate to slave.
         static charybdis_config_t last_charybdis_config = {0};
@@ -455,6 +547,8 @@ void housekeeping_task_kb(void) {
 
 #ifdef CHARYBDIS_CONFIG_DUAL_SYNC
 void housekeeping_task_kb(void) {
+    check_deferred_eeprom_write();
+
     if (is_keyboard_master()) {
         // Keep track of the last state, so that we can tell if we need to propagate to slave.
         static charybdis_config_t last_charybdis_config_left = {0};
@@ -495,33 +589,3 @@ void housekeeping_task_kb(void) {
 
 
 #endif     // POINTING_DEVICE_ENABLE
-
-#if defined(KEYBOARD_bastardkb_charybdis_3x5_blackpill) || defined(KEYBOARD_bastardkb_charybdis_4x6_blackpill)
-void keyboard_pre_init_kb(void) {
-    gpio_set_pin_input_high(A0);
-    keyboard_pre_init_user();
-}
-
-void matrix_scan_kb(void) {
-    if (!gpio_read_pin(A0)) {
-        reset_keyboard();
-    }
-    matrix_scan_user();
-}
-#endif // KEYBOARD_bastardkb_charybdis_3x5_blackpill || KEYBOARD_bastardkb_charybdis_4x6_blackpill
-
-bool shutdown_kb(bool jump_to_bootloader) {
-    if (!shutdown_user(jump_to_bootloader)) {
-        return false;
-    }
-#ifdef RGBLIGHT_ENABLE
-    rgblight_enable_noeeprom();
-    rgblight_mode_noeeprom(RGBLIGHT_MODE_STATIC_LIGHT);
-    rgblight_setrgb(RGB_RED);
-#endif // RGBLIGHT_ENABLE
-#ifdef RGB_MATRIX_ENABLE
-    rgb_matrix_set_color_all(RGB_RED);
-    rgb_matrix_update_pwm_buffers();
-#endif // RGB_MATRIX_ENABLE
-    return true;
-}
