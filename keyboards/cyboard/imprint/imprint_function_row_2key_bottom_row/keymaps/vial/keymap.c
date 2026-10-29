@@ -222,8 +222,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     // Sym layer
     [6] = LAYOUT_fun(
         _______, _______, _______, _______, _______, _______,                           _______, _______, _______, _______, _______, _______,
-        KC_GRV , KC_LBRC, KC_LPRN, KC_RPRN, KC_RBRC, KC_DOT ,                           _______, _______, _______, _______, _______, _______,
-        KC_EXLM, KC_COMM, KC_LCBR, KC_RCBR, KC_SCLN, KC_QUES,                           KC_GRV , _______, _______, _______, _______, _______,
+        KC_GRV , KC_COMM, KC_LPRN, KC_RPRN, KC_SCLN, KC_DOT ,                           _______, _______, _______, _______, _______, _______,
+        KC_EXLM, KC_LBRC, KC_LCBR, KC_RCBR, KC_RBRC, KC_QUES,                           KC_GRV , _______, _______, _______, _______, _______,
         KC_HASH, KC_CIRC, KC_EQL,  KC_UNDS, KC_DLR , KC_ASTR,                           KC_DQT , KC_RSFT, KC_RGUI, KC_RALT, KC_RCTL, _______,
         KC_TILD, KC_LABK, KC_PIPE, KC_MINS, KC_RABK, KC_SLSH,                           KC_QUOT, _______, _______, _______, _______, _______,
                           KC_AMPR, KC_PLUS, KC_BSLS, KC_DOT , KC_ASTR,         _______, _______, _______, _______, _______,
